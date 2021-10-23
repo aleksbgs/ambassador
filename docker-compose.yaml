@@ -19,7 +19,7 @@ services:
     volumes:
       - .dbdata:/var/lib/postgresql/data
     ports:
-      - 54322:5432
+      - 5432:5432
 
   redis:
     image: redis:latest
