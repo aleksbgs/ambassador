@@ -9,19 +9,17 @@ services:
     depends_on:
       - db
       - redis
-
   db:
-    image: mysql:5.7.22
+    image: postgres:latest
     restart: always
     environment:
-      MYSQL_DATABASE: ambassador
-      MYSQL_USER: root
-      MYSQL_PASSWORD: root
-      MYSQL_ROOT_PASSWORD: root
+      POSTGRES_DB: ambassador
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: root
     volumes:
-      - .dbdata:/var/lib/mysql
+      - .dbdata:/var/lib/postgresql/data
     ports:
-      - 33066:3306
+      - 54322:5432
 
   redis:
     image: redis:latest

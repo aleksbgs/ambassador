@@ -1,4 +1,4 @@
-module ambassador
+module github.com/aleksbgs/ambassador
 
 go 1.16
 
@@ -16,5 +16,6 @@ require (
 	golang.org/x/crypto v0.0.0-20210921155107-089bfa567519
 	golang.org/x/sys v0.0.0-20211023085530-d6a326fbbf70 // indirect
 	gorm.io/driver/mysql v1.1.2
+	gorm.io/driver/postgres v1.1.2
 	gorm.io/gorm v1.21.16
 )
