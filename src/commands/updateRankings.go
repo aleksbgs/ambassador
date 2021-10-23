@@ -1,9 +1,9 @@
 package main
 
 import (
+	"context"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
-	"context"
 	"github.com/go-redis/redis/v8"
 )
 
