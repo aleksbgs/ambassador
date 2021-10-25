@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
+	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v72"
 	"github.com/stripe/stripe-go/v72/checkout/session"
-	"net/smtp"
 )
 
 func Orders(c *fiber.Ctx) error {
@@ -114,8 +114,36 @@ func CreateOrder(c *fiber.Ctx) error {
 			Quantity:    stripe.Int64(int64(requestProduct["quantity"])),
 		})
 	}
+	producer, err := kafka.NewProducer(&kafka.ConfigMap{
+		"bootstrap.servers": "pkc-4ygn6.europe-west3.gcp.confluent.cloud:9092",
+		"security.protocol": "SASL_SSL",
+		"sasl.username":     "DQF3PX3S424LV5A3",
+		"sasl.password":     "f62c0f8M8nQ2tQTxksKPFplfE/yNlGweddVCq0PINec8oqn5NxgNERi3k6okTceM",
+		"sasl.mechanism":    "PLAIN",
+	})
+	if err != nil {
+		panic(err)
+	}
 
-	stripe.Key = "sk_test_51H0wSsFHUJ5mamKOVQx6M8kihCIxpBk6DzOhrf4RrpEgqh2bfpI7vbsVu2j5BT0KditccHBnepG33QudcrtBUHfv00Bbw1XXjL"
+	defer producer.Close()
+
+	message := map[string]interface{}{
+		"id":                 "1",
+		"ambassador_revenue": "12",
+		"admin_revenue":      "3",
+		"code":               order.Code,
+		"ambassador_email":   order.AmbassadorEmail,
+	}
+
+	value, _ := json.Marshal(message)
+
+	topic := "default"
+	producer.Produce(&kafka.Message{
+		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+		Value:          value,
+	}, nil)
+	producer.Flush(15000)
+	stripe.Key = "sk_test_51Jo4wSDSNN5hVzl0R4WFH4P2UkhRfwrtOR7kNnMSlX50MXwB8apdhFARbRN4ZaMRaMYHOQLVJByrRE1KZeoXXTeY00Z3ttcGBn"
 
 	params := stripe.CheckoutSessionParams{
 		SuccessURL:         stripe.String("http://localhost:5000/success?source={CHECKOUT_SESSION_ID}"),
@@ -188,13 +216,35 @@ func CompleteOrder(c *fiber.Ctx) error {
 
 		database.Cache.ZIncrBy(context.Background(), "rankings", ambassadorRevenue, user.Name())
 
-		ambassadorMessage := []byte(fmt.Sprintf("You earned $%f from the link #%s", ambassadorRevenue, order.Code))
+		producer, err := kafka.NewProducer(&kafka.ConfigMap{
+			"bootstrap.servers": "pkc-4ygn6.europe-west3.gcp.confluent.cloud:9092",
+			"security.protocol": "SASL_SSL",
+			"sasl.username":     "DQF3PX3S424LV5A3",
+			"sasl.password":     "f62c0f8M8nQ2tQTxksKPFplfE/yNlGweddVCq0PINec8oqn5NxgNERi3k6okTceM",
+			"sasl.mechanism":    "PLAIN",
+		})
+		if err != nil {
+			panic(err)
+		}
 
-		smtp.SendMail("host.docker.internal:1025", nil, "no-reply@email.com", []string{order.AmbassadorEmail}, ambassadorMessage)
+		defer producer.Close()
 
-		adminMessage := []byte(fmt.Sprintf("Order #%d with a total of $%f has been completed", order.Id, adminRevenue))
+		message := map[string]interface{}{
+			"id":                 order.Id,
+			"ambassador_revenue": ambassadorRevenue,
+			"admin_revenue":      adminRevenue,
+			"code":               order.Code,
+			"ambassador_email":   order.AmbassadorEmail,
+		}
 
-		smtp.SendMail("host.docker.internal:1025", nil, "no-reply@email.com", []string{"admin@admin.com"}, adminMessage)
+		value, _ := json.Marshal(message)
+
+		topic := "default"
+		producer.Produce(&kafka.Message{
+			TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
+			Value:          value,
+		}, nil)
+		producer.Flush(15000)
 	}(order)
 
 	return c.JSON(fiber.Map{
