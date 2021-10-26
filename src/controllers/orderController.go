@@ -146,7 +146,7 @@ func CreateOrder(c *fiber.Ctx) error {
 
 	tx.Commit()
 
-	return c.JSON(source)
+	return c.JSON(source.ID)
 }
 
 func CompleteOrder(c *fiber.Ctx) error {
