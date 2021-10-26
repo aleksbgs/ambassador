@@ -111,38 +111,10 @@ func CreateOrder(c *fiber.Ctx) error {
 			Images:      []*string{stripe.String(product.Image)},
 			Amount:      stripe.Int64(100 * int64(product.Price)),
 			Currency:    stripe.String("usd"),
-			Quantity:    stripe.Int64(int64(requestProduct["quantity"])),
+			Quantity:    stripe.Int64(int64(1)),
 		})
 	}
-	producer, err := kafka.NewProducer(&kafka.ConfigMap{
-		"bootstrap.servers": "pkc-4ygn6.europe-west3.gcp.confluent.cloud:9092",
-		"security.protocol": "SASL_SSL",
-		"sasl.username":     "DQF3PX3S424LV5A3",
-		"sasl.password":     "f62c0f8M8nQ2tQTxksKPFplfE/yNlGweddVCq0PINec8oqn5NxgNERi3k6okTceM",
-		"sasl.mechanism":    "PLAIN",
-	})
-	if err != nil {
-		panic(err)
-	}
 
-	defer producer.Close()
-
-	message := map[string]interface{}{
-		"id":                 "1",
-		"ambassador_revenue": "12",
-		"admin_revenue":      "3",
-		"code":               order.Code,
-		"ambassador_email":   order.AmbassadorEmail,
-	}
-
-	value, _ := json.Marshal(message)
-
-	topic := "default"
-	producer.Produce(&kafka.Message{
-		TopicPartition: kafka.TopicPartition{Topic: &topic, Partition: kafka.PartitionAny},
-		Value:          value,
-	}, nil)
-	producer.Flush(15000)
 	stripe.Key = "sk_test_51Jo4wSDSNN5hVzl0R4WFH4P2UkhRfwrtOR7kNnMSlX50MXwB8apdhFARbRN4ZaMRaMYHOQLVJByrRE1KZeoXXTeY00Z3ttcGBn"
 
 	params := stripe.CheckoutSessionParams{
@@ -230,11 +202,11 @@ func CompleteOrder(c *fiber.Ctx) error {
 		defer producer.Close()
 
 		message := map[string]interface{}{
-			"id":                 order.Id,
-			"ambassador_revenue": ambassadorRevenue,
-			"admin_revenue":      adminRevenue,
+			"id":                 "1",
+			"ambassador_revenue": "12",
+			"admin_revenue":      "3",
 			"code":               order.Code,
-			"ambassador_email":   order.AmbassadorEmail,
+			"ambassador_email":   "amarkovic29@gmail.com",
 		}
 
 		value, _ := json.Marshal(message)
