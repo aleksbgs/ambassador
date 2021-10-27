@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
-	"github.com/aleksbgs/ambassador/src/utils"
+	"github.com/aleksbgs/users/src/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v72"
@@ -116,7 +116,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	stripe.Key = utils.ViperEnvVariable("STRIPE_TEST_SECRETKEY")
+	stripe.Key =  utils.ViperEnvVariable("STRIPE_TEST_SECRETKEY")
 
 	params := stripe.CheckoutSessionParams{
 		SuccessURL:         stripe.String("http://localhost:5000/success?source={CHECKOUT_SESSION_ID}"),

@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"github.com/aleksbgs/ambassador/src/utils"
+	"github.com/aleksbgs/ambassador/utils"
 	"github.com/go-redis/redis/v8"
 	"time"
 )

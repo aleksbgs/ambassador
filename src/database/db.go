@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/aleksbgs/ambassador/src/models"
-	"github.com/aleksbgs/ambassador/src/utils"
+	"github.com/aleksbgs/ambassador/utils"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
