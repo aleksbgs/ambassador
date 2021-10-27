@@ -11,7 +11,7 @@ var DB *gorm.DB
 
 func Connect() {
 	var err error
-	host := utils.ViperEnvVariable("DBHOST")
+	host := utils.ViperEnvVariable("DBDOCKERHOST")
 	dbuser := utils.ViperEnvVariable("DBUSER")
 	password := utils.ViperEnvVariable("DBPASSWORD")
 	dbname := utils.ViperEnvVariable("DBNAME")
