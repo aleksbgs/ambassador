@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
+	"github.com/aleksbgs/ambassador/src/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v72"
@@ -115,7 +116,7 @@ func CreateOrder(c *fiber.Ctx) error {
 		})
 	}
 
-	stripe.Key = "sk_test_51Jo4wSDSNN5hVzl0R4WFH4P2UkhRfwrtOR7kNnMSlX50MXwB8apdhFARbRN4ZaMRaMYHOQLVJByrRE1KZeoXXTeY00Z3ttcGBn"
+	stripe.Key = utils.ViperEnvVariable("STRIPE_TEST_SECRETKEY")
 
 	params := stripe.CheckoutSessionParams{
 		SuccessURL:         stripe.String("http://localhost:5000/success?source={CHECKOUT_SESSION_ID}"),
@@ -189,10 +190,10 @@ func CompleteOrder(c *fiber.Ctx) error {
 		database.Cache.ZIncrBy(context.Background(), "rankings", ambassadorRevenue, user.Name())
 
 		producer, err := kafka.NewProducer(&kafka.ConfigMap{
-			"bootstrap.servers": "pkc-4ygn6.europe-west3.gcp.confluent.cloud:9092",
+			"bootstrap.servers": utils.ViperEnvVariable("bootstrap.servers"),
 			"security.protocol": "SASL_SSL",
-			"sasl.username":     "DQF3PX3S424LV5A3",
-			"sasl.password":     "f62c0f8M8nQ2tQTxksKPFplfE/yNlGweddVCq0PINec8oqn5NxgNERi3k6okTceM",
+			"sasl.username":     utils.ViperEnvVariable("sasl.username"),
+			"sasl.password":     utils.ViperEnvVariable("sasl.password"),
 			"sasl.mechanism":    "PLAIN",
 		})
 		if err != nil {
@@ -202,11 +203,11 @@ func CompleteOrder(c *fiber.Ctx) error {
 		defer producer.Close()
 
 		message := map[string]interface{}{
-			"id":                 "1",
-			"ambassador_revenue": "12",
-			"admin_revenue":      "3",
+			"id":                 order.Id,
+			"ambassador_revenue": ambassadorRevenue,
+			"admin_revenue":      adminRevenue,
 			"code":               order.Code,
-			"ambassador_email":   "amarkovic29@gmail.com",
+			"ambassador_email":   order.Email,
 		}
 
 		value, _ := json.Marshal(message)

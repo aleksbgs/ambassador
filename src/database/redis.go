@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"github.com/aleksbgs/ambassador/src/utils"
 	"github.com/go-redis/redis/v8"
 	"time"
 )
@@ -12,7 +13,7 @@ var CacheChannel chan string
 
 func SetupRedis() {
 	Cache = redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: utils.ViperEnvVariable("REDIS") + ":6379",
 		DB:   0,
 	})
 }
