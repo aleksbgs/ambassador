@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
-	"github.com/aleksbgs/users/src/utils"
+	"github.com/aleksbgs/ambassador/utils"
 	"github.com/confluentinc/confluent-kafka-go/kafka"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stripe/stripe-go/v72"
