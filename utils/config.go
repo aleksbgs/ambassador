@@ -10,6 +10,12 @@ func ViperEnvVariable(key string) string {
 	// SetConfigFile explicitly defines the path, name and extension of the config file.
 	// Viper will use this and not check any of the config paths.
 	// .env - It will search for the .env file in the current directory
+
+	//local setup
+	//viper.SetConfigFile("/Users/aleksandar/go/src/github.com/aleksbgs/users/.env")
+
+
+	//microservice setup
 	viper.SetConfigFile("./.env")
 
 	// Find and read the config file
