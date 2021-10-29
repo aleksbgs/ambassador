@@ -1,10 +1,14 @@
 package controllers
 
 import (
+	"bytes"
+	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/middlewares"
 	"github.com/aleksbgs/ambassador/src/models"
 	"github.com/gofiber/fiber/v2"
+	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -16,22 +20,20 @@ func Register(c *fiber.Ctx) error {
 		return err
 	}
 
-	if data["password"] != data["password_confirm"] {
-		c.Status(400)
-		return c.JSON(fiber.Map{
-			"message": "passwords do not match",
-		})
+	data["is_ambassador"] = strconv.FormatBool(strings.Contains(c.Path(), "/api/ambassador"))
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		return err
 	}
 
-	user := models.User{
-		FirstName:    data["first_name"],
-		LastName:     data["last_name"],
-		Email:        data["email"],
-		IsAmbassador: strings.Contains(c.Path(), "/api/ambassador"),
+	response, err := http.Post("http://host.docker.internal:8001/api/register", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
 	}
-	user.SetPassword(data["password"])
+	var user models.User
 
-	database.DB.Create(&user)
+	json.NewDecoder(response.Body).Decode(&user)
 
 	return c.JSON(user)
 }
