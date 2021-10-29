@@ -1,13 +1,12 @@
 package controllers
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/middlewares"
 	"github.com/aleksbgs/ambassador/src/models"
+	"github.com/aleksbgs/ambassador/src/services"
 	"github.com/gofiber/fiber/v2"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -22,12 +21,7 @@ func Register(c *fiber.Ctx) error {
 
 	data["is_ambassador"] = strconv.FormatBool(strings.Contains(c.Path(), "/api/ambassador"))
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	response, err := http.Post("http://host.docker.internal:8001/api/register", "application/json", bytes.NewBuffer(jsonData))
+	response, err := services.Request("POST", "register", "", data)
 	if err != nil {
 		return err
 	}
@@ -53,12 +47,7 @@ func Login(c *fiber.Ctx) error {
 		data["scope"] = "admin"
 	}
 
-	jsonData, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
-	response, err := http.Post("http://host.docker.internal:8001/api/login", "application/json", bytes.NewBuffer(jsonData))
+	response, err := services.Request("POST", "login", "", data)
 	if err != nil {
 		return err
 	}
@@ -82,17 +71,15 @@ func Login(c *fiber.Ctx) error {
 }
 
 func User(c *fiber.Ctx) error {
-	id, _ := middlewares.GetUserId(c)
+
+	response, err := services.Request("GET", "user", c.Cookies("jwt", ""), nil)
+	if err != nil {
+		return err
+	}
 
 	var user models.User
 
-	database.DB.Where("id = ?", id).First(&user)
-
-	if strings.Contains(c.Path(), "/api/ambassador") {
-		ambassador := models.Ambassador(user)
-		ambassador.CalculateRevenue(database.DB)
-		return c.JSON(ambassador)
-	}
+	json.NewDecoder(response.Body).Decode(&user)
 
 	return c.JSON(user)
 }
