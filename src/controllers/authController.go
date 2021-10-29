@@ -45,53 +45,31 @@ func Login(c *fiber.Ctx) error {
 		return err
 	}
 
-	var user models.User
-
-	database.DB.Where("email = ?", data["email"]).First(&user)
-
-	if user.Id == 0 {
-		c.Status(fiber.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "Invalid Credentials",
-		})
-	}
-
-	if err := user.ComparePassword(data["password"]); err != nil {
-		c.Status(fiber.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "Invalid Credentials",
-		})
-	}
-
 	isAmbassador := strings.Contains(c.Path(), "/api/ambassador")
 
-	var scope string
-
 	if isAmbassador {
-		scope = "ambassador"
+		data["scope"] = "ambassador"
 	} else {
-		scope = "admin"
+		data["scope"] = "admin"
 	}
 
-	if !isAmbassador && user.IsAmbassador {
-		c.Status(fiber.StatusUnauthorized)
-		return c.JSON(fiber.Map{
-			"message": "unauthorized",
-		})
-	}
-
-	token, err := middlewares.GenerateJWT(user.Id, scope)
-
+	jsonData, err := json.Marshal(data)
 	if err != nil {
-		c.Status(fiber.StatusBadRequest)
-		return c.JSON(fiber.Map{
-			"message": "Invalid Credentials",
-		})
+		return err
 	}
+
+	response, err := http.Post("http://host.docker.internal:8001/api/login", "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	var res map[string]string
+
+	json.NewDecoder(response.Body).Decode(&res)
 
 	cookie := fiber.Cookie{
 		Name:     "jwt",
-		Value:    token,
+		Value:    res["jwt"],
 		Expires:  time.Now().Add(time.Hour * 24),
 		HTTPOnly: true,
 	}
