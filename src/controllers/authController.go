@@ -2,8 +2,6 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/aleksbgs/ambassador/src/database"
-	"github.com/aleksbgs/ambassador/src/middlewares"
 	"github.com/aleksbgs/ambassador/src/models"
 	"github.com/aleksbgs/ambassador/src/services"
 	"github.com/gofiber/fiber/v2"
@@ -21,7 +19,7 @@ func Register(c *fiber.Ctx) error {
 
 	data["is_ambassador"] = strconv.FormatBool(strings.Contains(c.Path(), "/api/ambassador"))
 
-	response, err := services.Request("POST", "register", "", data)
+	response, err := services.UserService.Post("register", "", data)
 	if err != nil {
 		return err
 	}
@@ -47,7 +45,7 @@ func Login(c *fiber.Ctx) error {
 		data["scope"] = "admin"
 	}
 
-	response, err := services.Request("POST", "login", "", data)
+	response, err := services.UserService.Post("login", "", data)
 	if err != nil {
 		return err
 	}
@@ -72,7 +70,7 @@ func Login(c *fiber.Ctx) error {
 
 func User(c *fiber.Ctx) error {
 
-	response, err := services.Request("GET", "user", c.Cookies("jwt", ""), nil)
+	response, err := services.UserService.Get("user", c.Cookies("jwt", ""))
 	if err != nil {
 		return err
 	}
@@ -85,6 +83,9 @@ func User(c *fiber.Ctx) error {
 }
 
 func Logout(c *fiber.Ctx) error {
+
+	services.UserService.Post("logout", c.Cookies("jwt", ""), nil)
+
 	cookie := fiber.Cookie{
 		Name:     "jwt",
 		Value:    "",
@@ -106,42 +107,32 @@ func UpdateInfo(c *fiber.Ctx) error {
 		return err
 	}
 
-	id, _ := middlewares.GetUserId(c)
-
-	user := models.User{
-		FirstName: data["first_name"],
-		LastName:  data["last_name"],
-		Email:     data["email"],
+	response, err := services.UserService.Put("users/info", c.Cookies("jwt", ""), data)
+	if err != nil {
+		return err
 	}
-	user.Id = id
 
-	database.DB.Model(&user).Updates(&user)
+	var user models.User
+
+	json.NewDecoder(response.Body).Decode(&user)
 
 	return c.JSON(user)
 }
 
 func UpdatePassword(c *fiber.Ctx) error {
 	var data map[string]string
-
 	if err := c.BodyParser(&data); err != nil {
 		return err
 	}
 
-	if data["password"] != data["password_confirm"] {
-		c.Status(400)
-		return c.JSON(fiber.Map{
-			"message": "passwords do not match",
-		})
+	response, err := services.UserService.Put("users/password", c.Cookies("jwt", ""), data)
+	if err != nil {
+		return err
 	}
 
-	id, _ := middlewares.GetUserId(c)
+	var user models.User
 
-	user := models.User{}
-	user.Id = id
-
-	user.SetPassword(data["password"])
-
-	database.DB.Model(&user).Updates(&user)
+	json.NewDecoder(response.Body).Decode(&user)
 
 	return c.JSON(user)
 }
