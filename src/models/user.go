@@ -11,7 +11,7 @@ type User struct {
 	LastName     string   `json:"last_name"`
 	Email        string   `json:"email" gorm:"unique"`
 	Password     []byte   `json:"-"`
-	IsAmbassador bool     `json:"-"`
+	IsAmbassador bool     `json:"is_ambassador"`
 	Revenue      *float64 `json:"revenue,omitempty" gorm:"-"`
 }
 

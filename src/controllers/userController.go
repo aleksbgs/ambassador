@@ -2,18 +2,33 @@ package controllers
 
 import (
 	"context"
+	"encoding/json"
 	"github.com/aleksbgs/ambassador/src/database"
 	"github.com/aleksbgs/ambassador/src/models"
+	"github.com/aleksbgs/ambassador/src/services"
 	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 )
 
 func Ambassadors(c *fiber.Ctx) error {
+
+	response, err := services.UserService.Get("users", c.Cookies("jwt", ""))
+	if err != nil {
+		return err
+	}
+
 	var users []models.User
+	var ambassadors []models.User
 
-	database.DB.Where("is_ambassador = true").Find(&users)
+	json.NewDecoder(response.Body).Decode(&users)
 
-	return c.JSON(users)
+	for _, user := range users {
+		if user.IsAmbassador {
+			ambassadors = append(ambassadors, user)
+		}
+	}
+
+	return c.JSON(ambassadors)
 }
 
 func Rankings(c *fiber.Ctx) error {
