@@ -9,6 +9,9 @@ services:
     depends_on:
       - db
       - redis
+    networks:
+      - monolith
+      - users
   db:
     image: postgres:latest
     restart: always
@@ -20,8 +23,17 @@ services:
       - .dbdata:/var/lib/postgresql/data
     ports:
       - 5432:5432
-
+    networks:
+      - monolith
   redis:
     image: redis:latest
     ports:
       - 6379:6379
+    networks:
+      - monolith
+networks:
+  users:
+    external:
+      name: users
+  monolith:
+
