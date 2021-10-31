@@ -69,17 +69,8 @@ func Login(c *fiber.Ctx) error {
 }
 
 func User(c *fiber.Ctx) error {
+	return c.JSON(c.Context().UserValue("user"))
 
-	response, err := services.UserService.Get("user", c.Cookies("jwt", ""))
-	if err != nil {
-		return err
-	}
-
-	var user models.User
-
-	json.NewDecoder(response.Body).Decode(&user)
-
-	return c.JSON(user)
 }
 
 func Logout(c *fiber.Ctx) error {
